@@ -31,8 +31,7 @@ module Yang =
         let lena = Array.length ak
         let lenb = Array.length bk
 
-        let maxer (a,x,m) (b,y,n) = if a > b then (a,x,m) else (b,y,n)
-        let maxer3 a b c = maxer (maxer a b) c
+        let maxByFirst = List.maxBy (fun (a,_,_) -> a)
 
         let ytable = Array2D.create (lena+1) (lenb+1) (0, Diag, (ENil, ENil))
         
@@ -47,10 +46,10 @@ module Yang =
               | (0,_) -> ytable.[i,j] <- (0, Left, (ENil, ELeaf (bk.[j-1])))
               | (_,0) -> ytable.[i,j] <- (0, Up,   (ELeaf (ak.[i-1]), ENil))
               | (_,_) -> let (ijscore, (ijl, ijr)) = yang (ak.[i-1]) (bk.[j-1]) lblcmp
-                         let a = ( ((i-1) @!@ (j-1)) + ijscore, Diag, (ijl, ijr) )
-                         let b = ( ((i-1) @!@ j),               Up,   (ijl, ijr) )
-                         let c = ( (i @!@ (j-1)),               Left, (ijl, ijr) )
-                         ytable.[i,j] <- maxer3 a b c
+                         let a = ( (i-1 @!@ j-1) + ijscore, Diag, (ijl, ijr) )
+                         let b = ( (i-1 @!@ j  ),           Up,   (ijl, ijr) )
+                         let c = ( (i   @!@ j-1),           Left, (ijl, ijr) )
+                         ytable.[i,j] <- maxByFirst [a;b;c]
 
         let rec traceback = function
           | (0,0) -> []
@@ -75,12 +74,12 @@ module Yang =
                                                      ((opl,l),(opr,r))) rtbl 
         let (tba, tbb) = List.unzip mtbl
 
-        let aekids = tba
-                     |> List.filter (fun (x,_) -> Option.isSome x)
-                     |> List.map (fun (x,y) -> Option.get x, y)
-        let bekids = tbb
-                     |> List.filter (fun (x,_) -> Option.isSome x)
-                     |> List.map (fun (x,y) -> Option.get x, y)
+        let removeNones = List.choose (fun (x,y) -> match x with
+                                                    | Some s -> Some (s,y)
+                                                    | None   -> None)
+
+        let aekids = tba |> removeNones
+        let bekids = tbb |> removeNones
 
         let (reta, retb) = if (score = 0) then (ELeaf ta, ELeaf tb)
                                           else (ENode (ta.label,aekids),
