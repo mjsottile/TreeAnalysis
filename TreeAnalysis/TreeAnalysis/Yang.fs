@@ -12,9 +12,9 @@ module Yang =
 
     type Direction = Left | Up | Diag
 
-    type EOp = Keep | Delete
+    type EditOp = Keep | Delete
 
-    type EditTree<'a> = ENode of 'a * ((EOp * EditTree<'a>) list)
+    type EditTree<'a> = ENode of 'a * ((EditOp * EditTree<'a>) list)
                       | ELeaf of Tree<'a>
                       | ENil
 
@@ -24,7 +24,6 @@ module Yang =
           | Left -> (None,        Some Delete)
           | Diag -> (Some Keep,   Some Keep)
     
-
         let ak = Array.ofList (ta.children)
         let bk = Array.ofList (tb.children)
 
@@ -56,23 +55,17 @@ module Yang =
           | (x,y) -> let move = x @+@ y
                      let (l,r) = x @%@ y
                      match move with
-                     | Up    -> ((x,y), Up, (l,r)) :: (traceback ((x-1),y))
-                     | Left  -> ((x,y), Left, (l,r)) :: (traceback (x,(y-1)))
-                     | Diag  -> ((x,y), Diag, (l,r)) :: (traceback ((x-1),(y-1)))
+                     | Up    -> ((x,y), Up  , (l,r)) :: (traceback ((x-1), y    ))
+                     | Left  -> ((x,y), Left, (l,r)) :: (traceback (x,     (y-1)))
+                     | Diag  -> ((x,y), Diag, (l,r)) :: (traceback ((x-1), (y-1)))
 
         let score = if lblcmp ta.label tb.label then 1 + (lena @!@ lenb) else 0
 
-        // Note: unrolled cascade of |>'s to individual lets to narrow down place where
-        // bug appears.
-        let tbl = traceback (lena, lenb)
-        let rtbl = List.rev tbl
-
-        // CRASH ORIGINATES HERE: the dirToOp call works, but then a crash occurs when the
-        // return tuple is constructed.  [Print statements used to narrow this down removed]
-        // Works fine w/ F# under Visual Studio 2015 on Windows 10.
-        let mtbl =  List.map (fun ((a,b),d,(l,r)) -> let (opl, opr) = dirToOp d
-                                                     ((opl,l),(opr,r))) rtbl 
-        let (tba, tbb) = List.unzip mtbl
+        let (tba, tbb) = traceback (lena, lenb)
+                         |> List.rev
+                         |> List.map (fun (_,d,(l,r)) -> let ops = dirToOp d
+                                                         ((fst ops,l),(snd ops,r)))
+                         |> List.unzip
 
         let removeNones = List.choose (fun (x,y) -> match x with
                                                     | Some s -> Some (s,y)
@@ -103,8 +96,3 @@ module Yang =
     
     let treedist t1 t2 lblcmp = let (score, _) = yang t1 t2 lblcmp in score
     let treediff t1 t2 lblcmp = let (_,(y1,y2)) = yang t1 t2 lblcmp in (cleaner y1, cleaner y2)
-
-    let rec etreeToLTree = function
-    | ELeaf l -> l
-    | ENode (l, kids) -> { label=l; children= (List.map (fun (_,kid) -> etreeToLTree kid) kids) }
-    | ENil -> failwith "Fatal etreeToLTree error: enil"

@@ -8,13 +8,34 @@ open TreeAnalysis
 open TreeAnalysis.Yang
 open TreeAnalysis.Types
 
+// blog post stuff
+
+let yellow1 = { label = "yellow"; children = [] }
+let yellow2 = { label = "yellow"; children = [] }
+
+let rchild1 = { label = "rchild"; children = [] }
+let red1 = { label = "red"; children = [rchild1] }
+let rchild2 = { label = "rchild"; children = [] }
+let red2 = { label = "red"; children = [rchild1] }
+let green = {label = "green"; children = []}
+let orange = {label = "orange"; children = []}
+
+let purp1 = { label = "purple"; children = [orange;yellow1;red1]}
+let purp2 = { label = "purple"; children = [yellow2;green;red2]}
+
+let lblcmp (s1:string) (s2:string) = s1=s2
+
+let (p1,p2) = treediff purp1 purp2 lblcmp
+let d = treedist purp1 purp2 lblcmp
+
+// other tests
+
 let t1 = { label = "a"; children = [] }
 let t2 = { label = "b"; children = [] }
 let t3 = { label = "c"; children = [t1;t2] }
 
 let t4 = { label = "c"; children = [t1;t1] }
 
-let lblcmp (s1:string) (s2:string) = s1=s2
 
 printfn "%A" t3
 printfn "%A" t4
