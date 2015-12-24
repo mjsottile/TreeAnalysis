@@ -16,7 +16,7 @@ let yellow2 = { label = "yellow"; children = [] }
 let rchild1 = { label = "rchild"; children = [] }
 let red1 = { label = "red"; children = [rchild1] }
 let rchild2 = { label = "rchild"; children = [] }
-let red2 = { label = "red"; children = [rchild1] }
+let red2 = { label = "red"; children = [rchild2] }
 let green = {label = "green"; children = []}
 let orange = {label = "orange"; children = []}
 
