@@ -4,7 +4,7 @@
 // implementation of tree matching method from Yang's 1991 paper
 // port of Haskell implementation to F#
 //
-// matt@sailfan.co // matt@galois.com
+// mjsottile@me.com
 //
 
 module Yang =
